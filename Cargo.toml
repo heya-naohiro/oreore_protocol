@@ -1,0 +1,13 @@
+[package]
+name = "ore_protocol"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bytes = "1.9.0"
+futures-core = "0.3.31"
+pin-project = "1.1.7"
+
+[dev-dependencies]
+futures = "0.3.31"
+tokio = {version = "1.42.0", features=["full"]}
