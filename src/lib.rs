@@ -149,4 +149,40 @@ mod tests {
             Bytes::from_static(b"hello world2")
         );
     }
+
+    #[tokio::test]
+    async fn test_ore_stream_insufficient() {
+        let mock_stream = mock_stream(vec![
+            Ok(Bytes::from(vec![0x00])),
+            Ok(Bytes::from(vec![0x0b])),
+            Ok(Bytes::from("hello")),
+            Ok(Bytes::from(" world")),
+            Ok(Bytes::from(vec![0x00])),
+            Ok(Bytes::from(vec![0x0c])),
+            Ok(Bytes::from("hello wo")),
+            Ok(Bytes::from("rld2")),
+        ]);
+        let mut ore_stream = OreStream::new(mock_stream);
+        let mut results = vec![];
+
+        while let Some(result) = ore_stream.next().await {
+            match result {
+                Ok(protocol) => results.push(protocol),
+                Err(e) => {
+                    eprintln!("Error: {:?}", e);
+                    break;
+                }
+            }
+        }
+        assert_eq!(results.len(), 2);
+
+        assert_eq!(
+            results[0].clone().payload.unwrap()[..],
+            Bytes::from_static(b"hello world")
+        );
+        assert_eq!(
+            results[1].clone().payload.unwrap()[..],
+            Bytes::from_static(b"hello world2")
+        );
+    }
 }
