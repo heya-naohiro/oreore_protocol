@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bytes = "1.9.0"
+futures = "0.3.31"
 futures-core = "0.3.31"
 pin-project = "1.1.7"
 

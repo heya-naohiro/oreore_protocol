@@ -48,6 +48,8 @@ impl OreProtocol {
         }
         self.payload_size = ((buf[0] as u16) << 8) + buf[1] as u16;
         self.state = ProtocolState::WaitPayload;
+        // 前にすすめる
+        buf.advance(2);
         Ok(())
     }
 
@@ -55,6 +57,7 @@ impl OreProtocol {
         if buf.len() < self.payload_size as usize {
             return Err(OreErrorInsufficient);
         }
+        // buf.split_toで消費するのでadvanceする必要がない
         self.payload = Some(buf.split_to(self.payload_size.into()));
         Ok(())
     }
