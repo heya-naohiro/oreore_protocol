@@ -83,19 +83,23 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::io;
+
     use super::*;
     use bytes::Bytes;
     use futures::{stream, StreamExt};
-    fn mock_stream() -> impl futures::Stream<Item = ByteStream> {
-        stream::iter(vec![
-            Ok(Bytes::from(vec![0x00, 0x0b])),
-            Ok(Bytes::from("hello world")),
-        ])
+    fn mock_stream(
+        testdata: Vec<Result<Bytes, io::Error>>,
+    ) -> impl futures::Stream<Item = ByteStream> {
+        stream::iter(testdata)
     }
 
     #[tokio::test]
-    async fn test_ore_stream1() {
-        let mock_stream = mock_stream();
+    async fn test_ore_stream_single() {
+        let mock_stream = mock_stream(vec![
+            Ok(Bytes::from(vec![0x00, 0x0b])),
+            Ok(Bytes::from("hello world")),
+        ]);
         let mut ore_stream = OreStream::new(mock_stream);
         let mut results = vec![];
 
@@ -108,7 +112,39 @@ mod tests {
                 }
             }
         }
+        assert_eq!(
+            results[0].clone().payload.unwrap()[..],
+            Bytes::from_static(b"hello world")
+        );
+    }
 
-        dbg!(results);
+    #[tokio::test]
+    async fn test_ore_stream_double() {
+        let mock_stream = mock_stream(vec![
+            Ok(Bytes::from(vec![0x00, 0x0b])),
+            Ok(Bytes::from("hello world")),
+            Ok(Bytes::from(vec![0x00, 0x0b])),
+            Ok(Bytes::from("hello worl2")),
+        ]);
+        let mut ore_stream = OreStream::new(mock_stream);
+        let mut results = vec![];
+
+        while let Some(result) = ore_stream.next().await {
+            match result {
+                Ok(protocol) => results.push(protocol),
+                Err(e) => {
+                    eprintln!("Error: {:?}", e);
+                    break;
+                }
+            }
+        }
+        assert_eq!(
+            results[0].clone().payload.unwrap()[..],
+            Bytes::from_static(b"hello world")
+        );
+        assert_eq!(
+            results[1].clone().payload.unwrap()[..],
+            Bytes::from_static(b"hello worl2")
+        );
     }
 }

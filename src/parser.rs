@@ -19,14 +19,14 @@ impl error::Error for OreErrorInsufficient {
         None
     }
 }
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub enum ProtocolState {
     #[default]
     WaitHeader,
     WaitPayload,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct OreProtocol {
     payload_size: u16,
     pub state: ProtocolState,
