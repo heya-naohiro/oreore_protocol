@@ -1,5 +1,5 @@
+use bytes::Buf;
 use bytes::BytesMut;
-use bytes::{Buf, Bytes};
 use std::error;
 use std::fmt;
 

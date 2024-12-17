@@ -9,7 +9,7 @@ type OreProtocolStreamResult = Result<parser::OreProtocol, std::io::Error>;
 type ByteStream = Result<bytes::Bytes, std::io::Error>;
 
 #[pin_project]
-struct OreStream<S>
+pub struct OreStream<S>
 where
     S: Stream<Item = ByteStream> + Unpin,
 {
@@ -76,7 +76,10 @@ where
                 return Poll::Pending;
             }
             Some(Err(e)) => return Poll::Ready(Some(Err(e))),
-            None => return Poll::Ready(None),
+            None => {
+                // [TODO] 終了する前にbufferの空かどうかのチェックが必要か状態遷移図を描いて検討する
+                return Poll::Ready(None);
+            }
         };
     }
 }
