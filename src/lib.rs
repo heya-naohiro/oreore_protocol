@@ -3,9 +3,9 @@ use futures_core::ready;
 use futures_core::Stream;
 use pin_project::pin_project;
 use std::{pin::Pin, task::Poll};
-mod parser;
+mod decoder;
 
-type OreProtocolStreamResult = Result<parser::OreProtocol, std::io::Error>;
+type OreProtocolStreamResult = Result<decoder::OreProtocol, std::io::Error>;
 type ByteStream = Result<bytes::Bytes, std::io::Error>;
 
 #[pin_project]
@@ -16,7 +16,7 @@ where
     #[pin]
     stream: S,
     buffer: BytesMut,
-    protocol: parser::OreProtocol, // プロトコル解析状態を保持
+    protocol: decoder::OreProtocol, // プロトコル解析状態を保持
 }
 
 impl<S> OreStream<S>
@@ -27,7 +27,7 @@ where
         OreStream {
             stream,
             buffer: BytesMut::new(),
-            protocol: parser::OreProtocol::new(),
+            protocol: decoder::OreProtocol::new(),
         }
     }
 }
@@ -45,8 +45,8 @@ where
         //dbg!(&this.protocol);
         if !this.buffer.is_empty() {
             match this.protocol.state {
-                parser::ProtocolState::WaitHeader => {
-                    if let Err(_e) = this.protocol.parse_fixed_header(this.buffer) {
+                decoder::ProtocolState::WaitHeader => {
+                    if let Err(_e) = this.protocol.decode_fixed_header(this.buffer) {
                         // Insufficient
                         // go to waiting data...
                     } else {
@@ -54,15 +54,15 @@ where
                         return Poll::Pending;
                     }
                 }
-                parser::ProtocolState::WaitPayload => {
-                    if let Err(_e) = this.protocol.parse_payload(this.buffer) {
+                decoder::ProtocolState::WaitPayload => {
+                    if let Err(_e) = this.protocol.decode_payload(this.buffer) {
                         // Insufficient
                         // go to waiting data...
                     } else {
                         // 奪って入れ替える、もともとにはDefaultを突っ込まれる(resetされるのでこれでOK)
                         // https://scrapbox.io/koki/%E6%A7%8B%E9%80%A0%E4%BD%93%E3%81%AE_&mut_%E5%8F%82%E7%85%A7%E3%81%8B%E3%82%89%E3%83%95%E3%82%A3%E3%83%BC%E3%83%AB%E3%83%89%E3%81%AE%E6%89%80%E6%9C%89%E6%A8%A9%E3%82%92%E5%A5%AA%E3%81%86
                         let completed_protocol = std::mem::take(this.protocol);
-                        *this.protocol = parser::OreProtocol::new();
+                        *this.protocol = decoder::OreProtocol::new();
                         return Poll::Ready(Some(Ok(completed_protocol)));
                     }
                 }

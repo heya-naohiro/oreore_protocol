@@ -42,7 +42,7 @@ impl OreProtocol {
         }
     }
 
-    pub fn parse_fixed_header(&mut self, buf: &mut BytesMut) -> Result<()> {
+    pub fn decode_fixed_header(&mut self, buf: &mut BytesMut) -> Result<()> {
         if buf.len() < 2 {
             return Err(OreErrorInsufficient);
         }
@@ -53,7 +53,7 @@ impl OreProtocol {
         Ok(())
     }
 
-    pub fn parse_payload(&mut self, buf: &mut BytesMut) -> Result<()> {
+    pub fn decode_payload(&mut self, buf: &mut BytesMut) -> Result<()> {
         if buf.len() < self.payload_size as usize {
             return Err(OreErrorInsufficient);
         }
