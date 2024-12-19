@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             while let Some(item) = ore_stream.next().await {
                 match item {
                     Ok(protocol) => {
-                        println!("Parsed protocol: {:?}", protocol);
+                        println!("Decoded protocol: {:?}", protocol);
                     }
                     Err(e) => {
                         eprintln!("Error: {:?}", e);
